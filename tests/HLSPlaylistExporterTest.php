@@ -2,10 +2,13 @@
 
 namespace Pbmedia\LaravelFFMpeg\Tests;
 
+use FFMpeg\FFMpeg;
 use FFMpeg\Filters\Audio\SimpleFilter;
 use FFMpeg\Format\AudioInterface;
 use FFMpeg\Media\Audio;
 use Mockery;
+use Pbmedia\LaravelFFMpeg\Disk;
+use Pbmedia\LaravelFFMpeg\File;
 use Pbmedia\LaravelFFMpeg\HLSPlaylistExporter;
 use Pbmedia\LaravelFFMpeg\Media;
 use Pbmedia\LaravelFFMpeg\SegmentedExporter;
@@ -222,5 +225,52 @@ class HLSPlaylistExporterTest extends TestCase
         );
 
         @unlink($this->srcDir . '/MyPlaylist.m3u8');
+    }
+
+    public function testStoreOnExternalDisk()
+    {
+        $media = $this->getVideoMedia();
+        $file  = $media->getFile();
+
+        $playlist = 'subdirectory/MyPlaylist.m3u8';
+
+        $formatA = (new \FFMpeg\Format\Video\X264)->setKiloBitrate(384);
+        $formatB = (new \FFMpeg\Format\Video\X264)->setKiloBitrate(512);
+
+        $exporter = new HLSPlaylistExporter($media);
+
+        $exporter->addFormat($formatA)
+            ->addFormat($formatB)
+            ->setPlaylistPath($playlist)
+            ->setSegmentLength(15);
+
+        $mockedRemoteDisk = Mockery::mock(Disk::class);
+
+        $mockedRemoteDisk->shouldReceive('isLocal')->once()->andReturn(false);
+
+        $mockedRemoteDisk->shouldReceive('put')->once()->withArgs(function ($path) {
+            return $path === 'subdirectory/MyPlaylist.m3u8';
+        })->andReturn(true);
+
+        $mockedRemoteDisk->shouldReceive('newFile')->once()->withArgs(['subdirectory/MyPlaylist.m3u8'])->andReturn($this->mockRemoteFile($mockedRemoteDisk, 'subdirectory/MyPlaylist.m3u8'));
+        $mockedRemoteDisk->shouldReceive('newFile')->once()->withArgs(['subdirectory/MyPlaylist_384.m3u8'])->andReturn($this->mockRemoteFile($mockedRemoteDisk, 'subdirectory/MyPlaylist_384.m3u8'));
+        $mockedRemoteDisk->shouldReceive('newFile')->once()->withArgs(['subdirectory/MyPlaylist_384_00000.ts'])->andReturn($this->mockRemoteFile($mockedRemoteDisk, 'subdirectory/MyPlaylist_384_00000.ts'));
+        $mockedRemoteDisk->shouldReceive('newFile')->once()->withArgs(['subdirectory/MyPlaylist_512.m3u8'])->andReturn($this->mockRemoteFile($mockedRemoteDisk, 'subdirectory/MyPlaylist_512.m3u8'));
+        $mockedRemoteDisk->shouldReceive('newFile')->once()->withArgs(['subdirectory/MyPlaylist_512_00000.ts'])->andReturn($this->mockRemoteFile($mockedRemoteDisk, 'subdirectory/MyPlaylist_512_00000.ts'));
+
+        $exporter->toDisk($mockedRemoteDisk)->save($playlist);
+    }
+
+    private function mockRemoteFile($disk, $path)
+    {
+        $remoteFile = new File($disk, $path);
+
+        $remoteFileMocked = Mockery::mock(File::class);
+        $remoteFileMocked->shouldReceive('getPath')->andReturn($remoteFile->getPath());
+        $remoteFileMocked->shouldReceive('getDisk')->andReturn($remoteFile->getDisk());
+        $remoteFileMocked->shouldReceive('getExtension')->andReturn($remoteFile->getExtension());
+        $remoteFileMocked->shouldReceive('put')->andReturn(true);
+
+        return $remoteFileMocked;
     }
 }

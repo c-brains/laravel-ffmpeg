@@ -74,6 +74,10 @@ class MediaExporter
 
         $this->{$this->saveMethod}($destinationPath);
 
+        if ($this instanceof HlsPlaylistExporter) {
+            return $this->media;
+        }
+
         if (!$disk->isLocal()) {
             $this->moveSavedFileToRemoteDisk($destinationPath, $file);
         }
@@ -81,8 +85,6 @@ class MediaExporter
         if ($this->visibility !== null) {
             $disk->setVisibility($path, $this->visibility);
         }
-
-        return $this->media;
     }
 
     protected function moveSavedFileToRemoteDisk($localSourcePath, File $fileOnRemoteDisk): bool
@@ -90,7 +92,7 @@ class MediaExporter
         return $fileOnRemoteDisk->put($localSourcePath) && @unlink($localSourcePath);
     }
 
-    private function getDestinationPathForSaving(File $file): string
+    protected function getDestinationPathForSaving(File $file)
     {
         if (!$file->getDisk()->isLocal()) {
             $tempName = FFMpeg::newTemporaryFile();

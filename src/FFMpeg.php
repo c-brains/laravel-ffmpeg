@@ -7,13 +7,15 @@ use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Illuminate\Contracts\Filesystem\Factory as Filesystems;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Psr\Log\LoggerInterface;
 
 class FFMpeg
 {
     protected static $filesystems;
 
-    private static $temporaryFiles = [];
+    private static $temporaryFiles       = [];
+    private static $temporaryDirectories = [];
 
     protected $disk;
 
@@ -45,6 +47,13 @@ class FFMpeg
     public static function newTemporaryFile(): string
     {
         return self::$temporaryFiles[] = tempnam(sys_get_temp_dir(), 'laravel-ffmpeg');
+    }
+
+    public static function newTemporaryDirectory(): string
+    {
+        return self::$temporaryDirectories[] = tap(sys_get_temp_dir() . DIRECTORY_SEPARATOR . Str::random(8), function ($directory) {
+            mkdir($directory);
+        });
     }
 
     public function cleanupTemporaryFiles()

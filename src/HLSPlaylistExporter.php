@@ -3,6 +3,8 @@
 namespace Pbmedia\LaravelFFMpeg;
 
 use FFMpeg\Format\VideoInterface;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Pbmedia\LaravelFFMpeg\SegmentedExporter;
 
 class HLSPlaylistExporter extends MediaExporter
@@ -144,16 +146,60 @@ class HLSPlaylistExporter extends MediaExporter
         return implode(PHP_EOL, $lines);
     }
 
-    public function savePlaylist(string $playlistPath): MediaExporter
+    public function savePlaylist($playlistData): MediaExporter
     {
+        $playlistPath = is_string($playlistData) ? $playlistData : $playlistData['full_path'];
+
         $this->setPlaylistPath($playlistPath);
         $this->exportStreams();
 
-        file_put_contents(
-            $playlistPath,
-            $this->getMasterPlaylistContents()
-        );
+        if ($this->getDisk()->isLocal()) {
+            file_put_contents(
+                $playlistPath, $this->getMasterPlaylistContents()
+            );
+
+            return $this;
+        }
+
+        $playlistTitle = pathinfo($playlistPath, PATHINFO_FILENAME);
+
+        $exportDir = pathinfo($playlistPath, PATHINFO_DIRNAME);
+
+        $subdir = ltrim(Str::after($exportDir, $playlistData['directory']), DIRECTORY_SEPARATOR);
+
+        $subdir = $subdir ? ($subdir . DIRECTORY_SEPARATOR) : null;
+
+        Collection::make(scandir($exportDir))->filter(function ($path) use ($playlistTitle) {
+            return Str::contains($path, $playlistTitle);
+        })->each(function ($path) use ($subdir) {
+            $file = $this->getDisk()->newFile(
+                $subdir . pathinfo($path, PATHINFO_BASENAME)
+            );
+
+            $this->moveSavedFileToRemoteDisk($path, $file);
+        });
+
+        $this->getDisk()->put($subdir . pathinfo($playlistPath, PATHINFO_BASENAME), $this->getMasterPlaylistContents());
 
         return $this;
+    }
+
+    protected function getDestinationPathForSaving(File $file)
+    {
+        if ($file->getDisk()->isLocal()) {
+            return parent::getDestinationPathForSaving($file);
+        }
+
+        $temporaryDirectory = FFmpeg::newTemporaryDirectory();
+
+        $fullPath = $temporaryDirectory . DIRECTORY_SEPARATOR . $file->getPath();
+
+        mkdir(pathinfo($fullPath, PATHINFO_DIRNAME), 0755, true);
+
+        return [
+            'path'      => $file->getPath(),
+            'directory' => $temporaryDirectory,
+            'full_path' => $fullPath,
+        ];
     }
 }

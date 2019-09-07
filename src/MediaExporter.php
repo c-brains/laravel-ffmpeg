@@ -85,6 +85,8 @@ class MediaExporter
         if ($this->visibility !== null) {
             $disk->setVisibility($path, $this->visibility);
         }
+
+        return $this->media;
     }
 
     protected function moveSavedFileToRemoteDisk($localSourcePath, File $fileOnRemoteDisk): bool

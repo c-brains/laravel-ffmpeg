@@ -34,7 +34,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/pascalbaljet/BinaryDriver"
+            "url": "https://github.com/pascalbaljet/BinaryDriver.git"
         }
     ],
     "autoload": {

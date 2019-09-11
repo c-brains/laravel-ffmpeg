@@ -22,7 +22,7 @@
         "illuminate/log": "^6.0",
         "illuminate/support": "^6.0",
         "league/flysystem": "^1.0.8",
-        "alchemy/binary-driver": "dev-master as 5.1.0",
+        "alchemy/binary-driver": "dev-monolog as 5.1.0",
         "php-ffmpeg/php-ffmpeg": "~0.14",
         "symfony/process": "^4.3.4"
     },

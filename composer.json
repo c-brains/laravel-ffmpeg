@@ -31,6 +31,12 @@
         "phpunit/phpunit": "^8.3",
         "twistor/flysystem-http": "^0.2.0"
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/Seldaek/monolog"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Pbmedia\\LaravelFFMpeg\\": "src"

@@ -194,7 +194,9 @@ class HLSPlaylistExporter extends MediaExporter
 
         $fullPath = $temporaryDirectory . DIRECTORY_SEPARATOR . $file->getPath();
 
-        mkdir(pathinfo($fullPath, PATHINFO_DIRNAME), 0755, true);
+        if (!is_dir($fullDir = pathinfo($fullPath, PATHINFO_DIRNAME))) {
+            mkdir($fullDir, 0755, true);
+        }
 
         return [
             'path'      => $file->getPath(),

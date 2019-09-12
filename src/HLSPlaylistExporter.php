@@ -171,12 +171,12 @@ class HLSPlaylistExporter extends MediaExporter
 
         Collection::make(scandir($exportDir))->filter(function ($path) use ($playlistTitle) {
             return Str::contains($path, $playlistTitle);
-        })->each(function ($path) use ($subdir) {
+        })->each(function ($path) use ($subdir, $exportDir) {
             $file = $this->getDisk()->newFile(
                 $subdir . pathinfo($path, PATHINFO_BASENAME)
             );
 
-            $this->moveSavedFileToRemoteDisk($path, $file);
+            $this->moveSavedFileToRemoteDisk($exportDir . DIRECTORY_SEPARATOR . $path, $file);
         });
 
         $this->getDisk()->put($subdir . pathinfo($playlistPath, PATHINFO_BASENAME), $this->getMasterPlaylistContents());

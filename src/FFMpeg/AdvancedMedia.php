@@ -2,6 +2,8 @@
 
 namespace ProtoneMedia\LaravelFFMpeg\FFMpeg;
 
+use Closure;
+use FFMpeg\Format\FormatInterface;
 use FFMpeg\Media\AdvancedMedia as MediaAdvancedMedia;
 use Illuminate\Support\Arr;
 
@@ -18,6 +20,43 @@ class AdvancedMedia extends MediaAdvancedMedia
     public static function make(MediaAdvancedMedia $media): self
     {
         return new static($media->getInputs(), $media->getFFMpegDriver(), FFProbe::make($media->getFFProbe()));
+    }
+
+    public function mapWithCallable(
+        array $outs,
+        FormatInterface $format,
+        $outputFilename,
+        $forceDisableAudio = false,
+        $forceDisableVideo = false,
+        callable $withCommands = null
+    ) {
+        $getter = Closure::bind(function (MediaAdvancedMedia $media) {
+            return $media->mapCommands;
+        }, null, MediaAdvancedMedia::class);
+
+        $currentCommands = $getter($this);
+
+        parent::map($outs, $format, $outputFilename, $forceDisableAudio, $forceDisableVideo);
+
+        if (!$withCommands) {
+            return $this;
+        }
+
+        $addedCommands = array_slice($getter($this), count($currentCommands));
+
+        $updatedCommands = $withCommands($addedCommands);
+
+        if (is_null($updatedCommands)) {
+            return $this;
+        }
+
+        $setter = Closure::bind(function (MediaAdvancedMedia $media, array $commands = []) {
+            $media->mapCommands = $commands;
+        }, null, MediaAdvancedMedia::class);
+
+        $setter($this, $updatedCommands);
+
+        return $this;
     }
 
     /**

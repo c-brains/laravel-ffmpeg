@@ -13,10 +13,10 @@ trait HandlesAdvancedMedia
      */
     protected $maps;
 
-    public function addFormatOutputMapping(FormatInterface $format, Media $output, array $outs, $forceDisableAudio = false, $forceDisableVideo = false)
+    public function addFormatOutputMapping(FormatInterface $format, Media $output, array $outs, $forceDisableAudio = false, $forceDisableVideo = false, callable $withCommands = null)
     {
         $this->maps->push(
-            new AdvancedOutputMapping($outs, $format, $output, $forceDisableAudio, $forceDisableVideo)
+            new AdvancedOutputMapping($outs, $format, $output, $forceDisableAudio, $forceDisableVideo, $withCommands)
         );
 
         return $this;

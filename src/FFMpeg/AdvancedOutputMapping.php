@@ -41,16 +41,13 @@ class AdvancedOutputMapping
      *
      * @var callable
      */
-    private $withCommands = null;
-
-    public function __construct(array $outs, FormatInterface $format, $output, bool $forceDisableAudio = false, bool $forceDisableVideo = false, callable $withCommands = null)
+    public function __construct(array $outs, FormatInterface $format, $output = null, bool $forceDisableAudio = false, bool $forceDisableVideo = false)
     {
         $this->outs              = $outs;
         $this->format            = $format;
         $this->output            = $output;
         $this->forceDisableAudio = $forceDisableAudio;
         $this->forceDisableVideo = $forceDisableVideo;
-        $this->withCommands      = $withCommands;
     }
 
     /**
@@ -69,13 +66,12 @@ class AdvancedOutputMapping
             $this->format->setAdditionalParameters($parameters);
         }
 
-        $advancedMedia->mapWithCallable(
+        $advancedMedia->map(
             $this->outs,
             $this->format,
-            $this->getOutputMedia()->getLocalPath(),
+            optional($this->output)->getLocalPath(),
             $this->forceDisableAudio,
-            $this->forceDisableVideo,
-            $this->withCommands
+            $this->forceDisableVideo
         );
     }
 
@@ -84,7 +80,7 @@ class AdvancedOutputMapping
         return $this->format;
     }
 
-    public function getOutputMedia(): Media
+    public function getOutputMedia(): ?Media
     {
         return $this->output;
     }

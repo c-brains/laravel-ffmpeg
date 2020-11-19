@@ -22,39 +22,28 @@ class AdvancedMedia extends MediaAdvancedMedia
         return new static($media->getInputs(), $media->getFFMpegDriver(), FFProbe::make($media->getFFProbe()));
     }
 
-    public function mapWithCallable(
+    public function map(
         array $outs,
         FormatInterface $format,
         $outputFilename,
         $forceDisableAudio = false,
-        $forceDisableVideo = false,
-        callable $withCommands = null
+        $forceDisableVideo = false
     ) {
         $getter = Closure::bind(function (MediaAdvancedMedia $media) {
             return $media->mapCommands;
         }, null, MediaAdvancedMedia::class);
 
-        $currentCommands = $getter($this);
-
-        parent::map($outs, $format, $outputFilename, $forceDisableAudio, $forceDisableVideo);
-
-        if (!$withCommands) {
-            return $this;
-        }
-
-        $addedCommands = array_slice($getter($this), count($currentCommands));
-
-        $updatedCommands = $withCommands($addedCommands);
-
-        if (is_null($updatedCommands)) {
-            return $this;
-        }
-
         $setter = Closure::bind(function (MediaAdvancedMedia $media, array $commands = []) {
             $media->mapCommands = $commands;
         }, null, MediaAdvancedMedia::class);
 
-        $setter($this, $updatedCommands);
+        parent::map($outs, $format, $outputFilename, $forceDisableAudio, $forceDisableVideo);
+
+        $commands = $getter($this);
+
+        $setter($this, array_filter($commands, function ($command) {
+            return !is_null($command);
+        }));
 
         return $this;
     }

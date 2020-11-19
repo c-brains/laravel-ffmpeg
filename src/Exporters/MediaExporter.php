@@ -175,7 +175,7 @@ class MediaExporter
             call_user_func($this->onProgressCallback, 100);
         }
 
-        $this->maps->map->getOutputMedia()->each->copyAllFromTemporaryDirectory($this->visibility);
+        $this->maps->map->getOutputMedia()->filter()->each->copyAllFromTemporaryDirectory($this->visibility);
 
         return $this->getMediaOpener();
     }

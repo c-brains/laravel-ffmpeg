@@ -51,7 +51,11 @@ class HLSPlaylistGenerator implements PlaylistGenerator
             return null;
         }
 
-        return $frameRate ? number_format($frameRate, 3, '.', '') : null;
+        if (!is_numeric($frameRate) || !$frameRate) {
+            return null;
+        }
+
+        return number_format($frameRate, 3, '.', '');
     }
 
     public function get(array $playlistMedia, PHPFFMpeg $driver): string
